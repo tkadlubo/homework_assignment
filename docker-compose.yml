@@ -1,0 +1,48 @@
+version: '3'
+
+services:
+
+  temperature:
+    image: pluspeterpublic/temperature:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+    restart: unless-stopped
+
+  windspeed:
+    image: pluspeterpublic/windspeed:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+    restart: unless-stopped
+
+  weather:
+    build:
+      context: .
+      dockerfile: weather.Dockerfile
+    ports:
+      - "8088:8088"
+    environment:
+      - TEMP_HOST=temperature:8000
+      - WIND_HOST=windspeed:8080
+      - PORT=8088
+    links:
+      - temperature
+      - windspeed
+    depends_on:
+      - temperature
+      - windspeed
+    restart: unless-stopped
+
+  test:
+    build:
+      context: .
+      dockerfile: test.Dockerfile
+    environment:
+      - WEATHER_HOST=weather:8088
+    links:
+      - weather
+    depends_on:
+      - weather
